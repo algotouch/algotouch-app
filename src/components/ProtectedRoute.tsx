@@ -37,6 +37,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   } catch {
     // Context not available outside provider
   }
+
+  // Detect pending payment (registration started but not yet confirmed)
+  const pendingPayment = !!localStorage.getItem('temp_registration_id');
   
   const location = useLocation();
   
@@ -74,7 +77,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (requireAuth && (!isAuthenticated || !hasActiveSubscription)) {
     console.log("ProtectedRoute: User lacks subscription, redirecting to subscription page", {
       isAuthenticated,
-      hasActiveSubscription
+      hasActiveSubscription,
+      pendingPayment
     });
     return <Navigate to="/subscription" state={{ from: location }} replace />;
   }
