@@ -1,7 +1,7 @@
 
 import { toast } from 'sonner';
 import { saveContractToDatabase, updateSubscriptionStatus, callIzidocSignFunction } from './storage-service';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 
 /**
  * Processes a signed contract, saving it to the database and sending confirmation

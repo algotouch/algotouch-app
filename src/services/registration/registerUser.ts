@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { TokenData, RegistrationData, ContractSignatureData } from '@/types/payment';
 
 interface RegisterUserParams {

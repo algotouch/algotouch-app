@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { Comment } from './types';
 import { awardPoints, ACTIVITY_TYPES } from './reputation-service';
 import { toast } from 'sonner';

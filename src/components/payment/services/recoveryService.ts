@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 
 // Send a recovery email to the user after a payment failure
 export const sendRecoveryEmail = async (

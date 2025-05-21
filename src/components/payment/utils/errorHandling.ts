@@ -1,6 +1,6 @@
 
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 
 // Common CardCom and payment provider error codes mapped to user-friendly messages
 export const ERROR_CODES = {
