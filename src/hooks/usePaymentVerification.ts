@@ -55,7 +55,7 @@ export function usePaymentVerification({
 
         if (!webhookError && webhookData && webhookData.processed) {
           // Payment was already processed by webhook
-          const payload = webhookData.payload as CardcomWebhookPayload;
+          const payload = webhookData.payload as unknown as CardcomWebhookPayload;
           
           PaymentLogger.info('Payment already processed by webhook', 'payment-verification', { 
             lowProfileId, 

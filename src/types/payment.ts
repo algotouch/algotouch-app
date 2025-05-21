@@ -16,9 +16,6 @@ export interface ContractSignatureData {
   signature?: string;
   agreedToTerms: boolean;
   agreedToPrivacy: boolean;
-  address?: string;
-  idNumber?: string;
-  phone?: string;
   email?: string;
   contractVersion?: string;
   browserInfo?: {
@@ -64,8 +61,9 @@ export interface RegistrationData {
     firstName: string;
     lastName: string;
     phone?: string;
-  };
+  }; 
   registrationTime: string;
+  ipAddress?: string;
   paymentToken?: {
     token?: string;
     expiry?: string;
