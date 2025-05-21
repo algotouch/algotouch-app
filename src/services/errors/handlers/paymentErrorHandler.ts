@@ -3,35 +3,52 @@ import { toast } from 'sonner';
 import { logError } from '../utils/errorTracking';
 import { ERROR_CODES, mapErrorCode } from '@/components/payment/utils/errorHandling';
 
+interface PaymentErrorOptions {
+  showToast?: boolean;
+  redirectTo?: string;
+  onError?: (error: unknown) => void;
+  retryAction?: () => Promise<unknown>;
+  retryAttempt?: number;
+  maxRetries?: number;
+}
+
+export interface PaymentErrorResult {
+  success: false;
+  error: unknown;
+  message: string;
+  code: string;
+}
+
 /**
  * Handles payment errors
  */
 export const handlePaymentError = async (
-  error: any, 
+  error: unknown,
   userId?: string,
   context: string = 'payment',
-  options?: {
-    showToast?: boolean;
-    redirectTo?: string;
-    onError?: (error: any) => void;
-    retryAction?: () => Promise<any>;
-    retryAttempt?: number;
-    maxRetries?: number;
-  }
-): Promise<any> => {
+  options?: PaymentErrorOptions
+): Promise<PaymentErrorResult> => {
   const showToast = options?.showToast ?? true;
-  const errorCode = mapErrorCode(error);
+  const errorCode = mapErrorCode(error as any);
   const errorMessage = ERROR_CODES[errorCode] || ERROR_CODES.UNKNOWN_ERROR;
   
   // Log the error
+  const logPayload =
+    error instanceof Error
+      ? Object.assign(error, {
+          code: errorCode,
+          mappedMessage: errorMessage
+        })
+      : {
+          original: error,
+          code: errorCode,
+          mappedMessage: errorMessage
+        };
+
   await logError({
     category: 'payment',
     action: context,
-    error: {
-      ...error,
-      code: errorCode,
-      mappedMessage: errorMessage
-    },
+    error: logPayload as Error,
     userId
   });
   
