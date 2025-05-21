@@ -109,7 +109,7 @@ serve(async (req) => {
 
     let hasValidToken = false;
     let hasValidSubscription = false;
-    let repairActions = [];
+    const repairActions = [];
 
     // Check token validity
     if (!tokenError && paymentTokens && paymentTokens.length > 0) {

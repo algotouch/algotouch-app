@@ -178,7 +178,7 @@ async function fetchNewsFromRSSFeeds(): Promise<NewsItem[]> {
   const results = await Promise.all(feedPromises);
   
   // Combine all news items from different sources
-  let allNews: NewsItem[] = results.flat();
+  const allNews: NewsItem[] = results.flat();
   
   if (allNews.length === 0) {
     throw new Error('All RSS feeds failed');
