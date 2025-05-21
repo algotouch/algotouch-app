@@ -67,3 +67,9 @@ Simply open [Lovable](https://lovable.dev/projects/943ea41c-32cf-4f38-9bf8-8a57a
 ## I want to use a custom domain - is that possible?
 
 We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+
+## Migrations
+
+Recent database migrations can be found in `supabase/migrations`.
+
+- `20250410120000_add_unique_constraint_profiles_phone.sql` adds a unique constraint to the `profiles.phone` column.
