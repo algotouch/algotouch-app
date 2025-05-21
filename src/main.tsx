@@ -12,9 +12,11 @@ window.__VITE_TIMESTAMP__ = Date.now();
 
 // Make sure the DOM is fully loaded before initializing React
 document.addEventListener('DOMContentLoaded', () => {
-  // Initialize the service worker
-  initializeServiceWorker();
-  
+  // Register the service worker only in production to avoid caching issues in development
+  if (import.meta.env.PROD) {
+    initializeServiceWorker();
+  }
+
   // Initialize the React application
   initializeApp();
 });
