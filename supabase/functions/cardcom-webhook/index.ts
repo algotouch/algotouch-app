@@ -288,7 +288,7 @@ serve(async (req) => {
         console.error("Error during webhook processing:", processingError);
         processingResult = {
           success: false,
-          message: "Error during webhook processing",
+          message: processingError.message || "Error during webhook processing",
           details: { error: processingError.message },
         };
       }
@@ -301,12 +301,12 @@ serve(async (req) => {
       };
     }
 
-    // Mark webhook as processed and store the result
+    // Mark webhook as processed based on success state
     if (logData && logData.length > 0) {
       await supabaseClient
         .from("payment_webhooks")
         .update({
-          processed: true,
+          processed: processingResult.success,
           processed_at: new Date().toISOString(),
           processing_result: processingResult,
         })
@@ -389,11 +389,12 @@ async function processUserPayment(supabase: any, userId: string, payload: any) {
     throw new Error(`Failed to update subscription: ${error.message}`);
   }
 
-  // If we have token info, store it in recurring_payments table
-  if (tokenInfo && tokenInfo.Token) {
-    console.log(`Storing token for user: ${userId}, token: ${tokenInfo.Token}`);
+  // Store token and log payment details
+  try {
+    // If we have token info, store it in recurring_payments table
+    if (tokenInfo && tokenInfo.Token) {
+      console.log(`Storing token for user: ${userId}, token: ${tokenInfo.Token}`);
 
-    try {
       // Determine token expiry, fallback to 3 years from today if not provided
       const tokenExpiry = parseCardcomDateString(tokenInfo.TokenExDate);
 
@@ -414,25 +415,20 @@ async function processUserPayment(supabase: any, userId: string, payload: any) {
       if (tokenError) {
         console.error("Error storing token:", tokenError);
         throw new Error(`Failed to store token: ${tokenError.message}`);
-      } else {
-        console.log("Token stored successfully");
       }
-    } catch (tokenSaveError) {
-      console.error("Error in token storage:", tokenSaveError);
-      throw tokenSaveError;
-    }
-  } else if (
-    payload.ResponseCode === 0 &&
-    (operation === "ChargeAndCreateToken" || operation === "CreateTokenOnly")
-  ) {
-    console.error("Missing TokenInfo in successful token operation", {
-      operation,
-      ResponseCode: payload.ResponseCode,
-    });
-  }
 
-  // Log the payment in user_payment_logs
-  try {
+      console.log("Token stored successfully");
+    } else if (
+      payload.ResponseCode === 0 &&
+      (operation === "ChargeAndCreateToken" || operation === "CreateTokenOnly")
+    ) {
+      console.error("Missing TokenInfo in successful token operation", {
+        operation,
+        ResponseCode: payload.ResponseCode,
+      });
+    }
+
+    // Log the payment in user_payment_logs
     const { error: logError } = await supabase
       .from("user_payment_logs")
       .insert({
@@ -464,9 +460,11 @@ async function processUserPayment(supabase: any, userId: string, payload: any) {
 
     if (logError) {
       console.error("Error logging payment:", logError);
+      throw new Error(`Failed to log payment: ${logError.message}`);
     }
-  } catch (logSaveError) {
-    console.error("Error in payment logging:", logSaveError);
+  } catch (error) {
+    console.error("Error storing token or logging payment:", error);
+    throw error;
   }
 }
 
