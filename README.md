@@ -81,8 +81,19 @@ Occasionally a Cardcom webhook may be logged without storing the payment token i
 did not create a token or remain unprocessed:
 
 ```sh
-npm run ts-node scripts/reprocess-missing-tokens.ts
+npx ts-node scripts/reprocess-missing-tokens.ts
 ```
 
 The script scans `payment_webhooks` for token information and invokes the
 `process-webhook` function for any records lacking a corresponding token entry.
+
+### Automated reprocessing
+
+A GitHub Actions workflow runs the same script every day at **1:30&nbsp;AM UTC**.
+The workflow requires the following secrets to connect to Supabase:
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Ensure these secrets are defined in the repository settings so the scheduled job
+can execute successfully.
