@@ -6,6 +6,7 @@ import { AuthProvider } from '@/contexts/auth';
 import { DirectionProvider } from '@/contexts/direction/DirectionProvider';
 import { StockDataProvider } from '@/contexts/stock/StockDataContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { SubscriptionProvider } from '@/contexts/subscription/SubscriptionContext';
 
 // Eagerly loaded routes for critical paths
 import Auth from '@/pages/Auth';
@@ -102,9 +103,11 @@ function App() {
             <Route
               element={
                 <AuthProvider>
-                  <StockDataProvider refreshInterval={30000}>
-                    <Outlet />
-                  </StockDataProvider>
+                  <SubscriptionProvider>
+                    <StockDataProvider refreshInterval={30000}>
+                      <Outlet />
+                    </StockDataProvider>
+                  </SubscriptionProvider>
                 </AuthProvider>
               }
             >
