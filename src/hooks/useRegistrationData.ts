@@ -1,65 +1,129 @@
-
 import { useState, useEffect } from 'react';
 
 interface RegistrationData {
-  planId?: string;
   email?: string;
   contractSigned?: boolean;
-  contractSignedAt?: string;
-  contractDetails?: any;
+  planId?: string;
   userData?: {
     firstName?: string;
     lastName?: string;
-    [key: string]: any;
+    phone?: string;
+  };
+  password?: string;
+  contractDetails?: {
+    contractHtml?: string;
+    signature?: string;
+    agreedToTerms?: boolean;
+    agreedToPrivacy?: boolean;
+    contractVersion?: string;
+    browserInfo?: any;
+  };
+  contractSignedAt?: string;
+  registrationTime?: string;
+  paymentToken?: {
+    token?: string;
+    expiry?: string;
+    last4Digits?: string;
+    cardholderName?: string;
   };
   [key: string]: any;
 }
 
-export function useRegistrationData() {
+export const useRegistrationData = () => {
   const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null);
-  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [currentStep, setCurrentStep] = useState(1);
   const [selectedPlan, setSelectedPlan] = useState<string | undefined>(undefined);
 
-  // Load registration data from session storage on initial load
+  // On component mount, load registration data from sessionStorage
   useEffect(() => {
     const storedData = sessionStorage.getItem('registration_data');
     if (storedData) {
       try {
-        const parsedData = JSON.parse(storedData);
-        setRegistrationData(parsedData);
-        
-        // If plan already selected, update state
-        if (parsedData.planId) {
-          setSelectedPlan(parsedData.planId);
+        const data = JSON.parse(storedData);
+
+        // Check if the data is still valid (within 30 minutes)
+        const registrationTime = data.registrationTime ? new Date(data.registrationTime) : null;
+        const now = new Date();
+        const isValid = registrationTime && ((now.getTime() - registrationTime.getTime()) < 30 * 60 * 1000);
+
+        // If data is too old, ignore it
+        if (!registrationTime || !isValid) {
+          console.log('Registration data has expired, clearing session');
+          sessionStorage.removeItem('registration_data');
+          return;
         }
-        
-        // Determine current step based on stored data
-        if (parsedData.contractSigned) {
-          setCurrentStep(3); // Payment step
-        } else if (parsedData.planId) {
-          setCurrentStep(2); // Contract step
+
+        console.log('Registration data found:', {
+          email: data.email,
+          firstName: data.userData?.firstName,
+          registrationTime: data.registrationTime,
+          hasPaymentToken: !!data.paymentToken,
+          age: registrationTime ? Math.round((now.getTime() - registrationTime.getTime()) / 60000) + ' minutes' : 'unknown'
+        });
+
+        setRegistrationData(data);
+
+        // Determine the current step based on stored registration data
+        if (data.paymentToken?.token) {
+          setCurrentStep(4); // Payment completed
+          setSelectedPlan(data.planId);
+        } else if (data.contractSigned) {
+          setCurrentStep(3); // Ready for payment
+          setSelectedPlan(data.planId);
+        } else if (data.planId) {
+          setCurrentStep(2); // Ready for contract
+          setSelectedPlan(data.planId);
         }
-      } catch (e) {
-        console.error('Error parsing registration data:', e);
+      } catch (error) {
+        console.error('Error parsing registration data:', error);
+        sessionStorage.removeItem('registration_data');
       }
     }
   }, []);
 
-  // Update registration data and save to session storage
   const updateRegistrationData = (newData: Partial<RegistrationData>) => {
-    setRegistrationData(prevData => {
-      const updatedData = { ...prevData, ...newData } as RegistrationData;
-      
-      // Save to session storage
-      sessionStorage.setItem('registration_data', JSON.stringify(updatedData));
-      
-      return updatedData;
+    let updatedData: RegistrationData;
+
+    if (registrationData) {
+      updatedData = { ...registrationData, ...newData };
+    } else {
+      updatedData = {
+        ...newData,
+        registrationTime: newData.registrationTime || new Date().toISOString()
+      } as RegistrationData;
+    }
+
+    setRegistrationData(updatedData);
+    sessionStorage.setItem('registration_data', JSON.stringify(updatedData));
+
+    // Automatically update steps based on data
+    if (newData.paymentToken?.token) {
+      setCurrentStep(4);
+    } else if (newData.contractSigned) {
+      setCurrentStep(3);
+    } else if (newData.planId && currentStep === 1) {
+      setCurrentStep(2);
+    }
+
+    if (newData.planId) {
+      setSelectedPlan(newData.planId);
+    }
+  };
+
+  const setPaymentToken = (tokenData: {
+    token: string;
+    expiry?: string;
+    last4Digits?: string;
+    cardholderName?: string;
+  }) => {
+    updateRegistrationData({
+      paymentToken: tokenData
     });
   };
 
-  // Clear registration data
   const clearRegistrationData = () => {
     sessionStorage.removeItem('registration_data');
+    localStorage.removeItem('temp_registration_id');
     setRegistrationData(null);
     setCurrentStep(1);
     setSelectedPlan(undefined);
@@ -68,10 +132,12 @@ export function useRegistrationData() {
   return {
     registrationData,
     updateRegistrationData,
+    setPaymentToken,
     clearRegistrationData,
     currentStep,
     setCurrentStep,
     selectedPlan,
     setSelectedPlan
   };
-}
+};
+
