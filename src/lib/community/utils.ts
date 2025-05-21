@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 
 // Define specific table names as a literal string union type to avoid excessive type instantiation
 export type TableNames = 

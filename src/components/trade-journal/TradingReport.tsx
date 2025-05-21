@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { motion } from 'framer-motion';
-import { supabase } from '@/integrations/supabase/client'; 
+import { supabase } from '@/lib/supabase-client'; 
 import { Loader2 } from 'lucide-react';
 
 import EmotionalState from './report/EmotionalState';
