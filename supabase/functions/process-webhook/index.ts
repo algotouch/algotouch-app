@@ -280,7 +280,9 @@ serve(async (req) => {
                 user_id: effectiveUserId,
                 token: tokenInfo.Token,
                 token_expiry: parseCardcomDateString(tokenInfo.TokenExDate),
-                token_approval_number: tokenInfo.TokenApprovalNumber,
+                // TokenApprovalNumber may be missing in some webhook payloads.
+                // Use empty string to avoid violating NOT NULL constraints.
+                token_approval_number: tokenInfo.TokenApprovalNumber || "",
                 last_4_digits: transactionInfo?.Last4CardDigits || null,
                 card_type: transactionInfo?.CardInfo || null,
                 status: 'active',
