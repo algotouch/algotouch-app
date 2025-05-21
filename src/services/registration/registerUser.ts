@@ -139,16 +139,22 @@ export const registerUser = async ({
         expiryDate.setFullYear(expiryDate.getFullYear() + 5); // 5 years validity for card token
         
         // Insert token data into recurring_payments table
-        await supabase.from('recurring_payments').insert({
-          user_id: userData.user.id,
-          token: tokenData.token.toString(), // Ensure it's a string
-          token_expiry: expiryDate.toISOString(),
-          last_4_digits: tokenData.lastFourDigits,
-          card_type: tokenData.cardType?.toString() || 'unknown',
-          status: 'active',
-          token_approval_number: tokenData.approvalNumber?.toString(),
-          is_valid: true
-        });
+        const { error: tokenError } = await supabase
+          .from('recurring_payments')
+          .upsert({
+            user_id: userData.user.id,
+            token: tokenData.token.toString(), // Ensure it's a string
+            token_expiry: expiryDate.toISOString(),
+            last_4_digits: tokenData.lastFourDigits,
+            card_type: tokenData.cardType?.toString() || 'unknown',
+            status: 'active',
+            token_approval_number: tokenData.approvalNumber?.toString(),
+            is_valid: true
+          }, { onConflict: 'token' });
+
+        if (tokenError) {
+          console.error('Error storing token:', tokenError);
+        }
           
         console.log('Payment token stored successfully');
       } catch (tokenStoreError) {
