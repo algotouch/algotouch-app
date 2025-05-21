@@ -4,6 +4,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { Spinner } from '@/components/ui/spinner';
 import { useUnifiedRegistrationData } from '@/hooks/useUnifiedRegistrationData';
+import { useSubscriptionContext } from '@/contexts/subscription/SubscriptionContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -26,11 +27,21 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     pendingSubscription,
     isRegistering
   } = useUnifiedRegistrationData();
+
+  let hasActiveSubscription = false;
+  let isCheckingSubscription = false;
+  try {
+    const subscription = useSubscriptionContext();
+    hasActiveSubscription = subscription.hasActiveSubscription;
+    isCheckingSubscription = subscription.isCheckingSubscription;
+  } catch {
+    // Context not available outside provider
+  }
   
   const location = useLocation();
   
-  // Show consistent loader while auth is initializing
-  if (!initialized || loading) {
+  // Show consistent loader while auth or subscription is initializing
+  if (!initialized || loading || isCheckingSubscription) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Spinner size="lg" />
@@ -59,10 +70,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/auth" state={{ from: location, redirectToSubscription: true }} replace />;
   }
 
-  // Standard auth checks
-  if (requireAuth && !isAuthenticated) {
-    console.log("ProtectedRoute: User is not authenticated, redirecting to auth");
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+  // Standard auth checks with subscription requirement
+  if (requireAuth && (!isAuthenticated || !hasActiveSubscription)) {
+    console.log("ProtectedRoute: User lacks subscription, redirecting to subscription page", {
+      isAuthenticated,
+      hasActiveSubscription
+    });
+    return <Navigate to="/subscription" state={{ from: location }} replace />;
   }
 
   if (!requireAuth && isAuthenticated) {
