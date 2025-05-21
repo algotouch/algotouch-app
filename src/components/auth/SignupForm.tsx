@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/lib/supabase-client';
+import { useUniqueUserValidation } from '@/hooks/useUniqueUserValidation';
 
 interface SignupFormProps {
   onSignupSuccess?: () => void;
@@ -29,6 +30,9 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSignupSuccess }) => {
   const [signingUp, setSigningUp] = useState(false);
   const [errors, setErrors] = useState<{[key: string]: string}>({});
 
+  const { emailError: duplicateEmail, phoneError: duplicatePhone, isValid: uniqueValid } =
+    useUniqueUserValidation(email, phone);
+
   const validateInputs = () => {
     const newErrors: {[key: string]: string} = {};
     
@@ -41,6 +45,8 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSignupSuccess }) => {
       newErrors.email = 'שדה חובה';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = 'כתובת מייל לא תקינה';
+    } else if (duplicateEmail) {
+      newErrors.email = duplicateEmail;
     }
     
     // בדיקת תקינות סיסמה
@@ -58,6 +64,8 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSignupSuccess }) => {
     // בדיקת תקינות מספר טלפון (אם הוזן)
     if (phone.trim() && !/^0[2-9]\d{7,8}$/.test(phone)) {
       newErrors.phone = 'מספר טלפון לא תקין';
+    } else if (duplicatePhone) {
+      newErrors.phone = duplicatePhone;
     }
     
     setErrors(newErrors);
@@ -67,7 +75,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSignupSuccess }) => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateInputs()) {
+    if (!validateInputs() || !uniqueValid) {
       return;
     }
     
@@ -172,10 +180,12 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSignupSuccess }) => {
               placeholder="name@example.com" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className={errors.email ? "border-red-500" : ""}
+              className={errors.email || duplicateEmail ? "border-red-500" : ""}
               required
             />
-            {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
+            {(errors.email || duplicateEmail) && (
+              <p className="text-xs text-red-500">{errors.email || duplicateEmail}</p>
+            )}
           </div>
           
           <div className="space-y-2">
@@ -186,9 +196,11 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSignupSuccess }) => {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="05XXXXXXXX"
-              className={errors.phone ? "border-red-500" : ""}
+              className={errors.phone || duplicatePhone ? "border-red-500" : ""}
             />
-            {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
+            {(errors.phone || duplicatePhone) && (
+              <p className="text-xs text-red-500">{errors.phone || duplicatePhone}</p>
+            )}
           </div>
           
           <div className="space-y-2">
