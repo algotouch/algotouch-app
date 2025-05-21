@@ -62,8 +62,9 @@ export interface RegistrationData {
     firstName: string;
     lastName: string;
     phone?: string;
-  };
+  }; 
   registrationTime: string;
+  ipAddress?: string;
   paymentToken?: {
     token?: string;
     expiry?: string;
