@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase-client';
 import { Session, User, AuthError } from '@supabase/supabase-js';
+import { UserProfileData } from '@/types/user';
 
 export function useSecureAuth() {
   const [session, setSession] = useState<Session | null>(null);
@@ -83,7 +84,11 @@ export function useSecureAuth() {
     }
   };
 
-  const signUp = async (email: string, password: string, userData?: any) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    userData?: UserProfileData | Record<string, unknown>
+  ) => {
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
@@ -120,7 +125,9 @@ export function useSecureAuth() {
     }
   };
 
-  const updateProfile = async (userData: any) => {
+  const updateProfile = async (
+    userData: UserProfileData | Record<string, unknown>
+  ) => {
     try {
       const { data, error: updateError } = await supabase.auth.updateUser({
         data: userData
