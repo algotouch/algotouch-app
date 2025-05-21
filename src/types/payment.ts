@@ -9,6 +9,9 @@ export interface TokenData {
 }
 
 export interface ContractSignatureData {
+  address?: string;
+  idNumber?: string;
+  phone?: string;
   contractHtml?: string;
   signature?: string;
   agreedToTerms: boolean;
