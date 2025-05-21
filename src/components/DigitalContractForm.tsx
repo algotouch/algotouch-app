@@ -6,13 +6,34 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Check, FileText, Download, ArrowDown } from 'lucide-react';
-import { supabase } from '@/lib/supabase-client';
 import SignaturePad from './signature/SignaturePad';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/auth';
+import { RegistrationData } from '@/types/payment';
+
+export interface ContractData {
+  userId?: string;
+  fullName: string;
+  address: string;
+  idNumber: string;
+  phone: string;
+  email?: string;
+  signature: string;
+  contractVersion: string;
+  contractHtml: string;
+  agreedToTerms: boolean;
+  agreedToPrivacy: boolean;
+  browserInfo: {
+    userAgent: string;
+    language: string;
+    platform: string;
+    screenSize: string;
+    timeZone: string;
+  };
+}
 
 interface DigitalContractFormProps {
-  onSign: (contractData: any) => void;
+  onSign: (contractData: ContractData) => void;
   planId: string;
   fullName: string;
 }
@@ -35,7 +56,7 @@ const DigitalContractForm: React.FC<DigitalContractFormProps> = ({
   const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
   const [isSigningInProgress, setIsSigningInProgress] = useState(false);
   const [scrolledToBottom, setScrolledToBottom] = useState(false);
-  const [registrationData, setRegistrationData] = useState<any>(null);
+  const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null);
   const [contractVersion] = useState('1.0');
   const contractRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();

@@ -32,7 +32,7 @@ export const initializeServiceWorker = (): void => {
       
       // Try to unregister any existing service workers first to prevent conflicts
       navigator.serviceWorker.getRegistrations().then(registrations => {
-        for (let registration of registrations) {
+        for (const registration of registrations) {
           registration.unregister();
           console.log('Unregistered previous service worker');
         }

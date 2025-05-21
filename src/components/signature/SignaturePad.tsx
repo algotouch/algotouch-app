@@ -59,22 +59,25 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
     }
   }, [value]);
 
-  const getCoordinates = (event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>, canvas: HTMLCanvasElement) => {
+  const getCoordinates = (
+    event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
+    canvas: HTMLCanvasElement
+  ) => {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    
+
     if ('touches' in event) {
       // Touch event
       return {
-        x: (event.touches[0].clientX - rect.left),
-        y: (event.touches[0].clientY - rect.top)
+        x: (event.touches[0].clientX - rect.left) * scaleX,
+        y: (event.touches[0].clientY - rect.top) * scaleY
       };
     } else {
       // Mouse event
       return {
-        x: (event.clientX - rect.left),
-        y: (event.clientY - rect.top)
+        x: (event.clientX - rect.left) * scaleX,
+        y: (event.clientY - rect.top) * scaleY
       };
     }
   };
