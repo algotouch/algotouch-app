@@ -1,6 +1,3 @@
-
-import { BaseDatabase } from './base';
-
 // Database extension for user profiles
 export interface ProfilesDatabase {
   public: {

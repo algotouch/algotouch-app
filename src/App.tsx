@@ -18,7 +18,7 @@ import NotFound from '@/pages/NotFound';
 import AuthLoadError from '@/pages/AuthLoadError';
 
 // Lazy loaded routes with retry utility
-const loadModuleWithRetry = (importFn: () => Promise<any>, name: string) => {
+const loadModuleWithRetry = <T>(importFn: () => Promise<T>, name: string): Promise<T> => {
   console.log(`Loading module: ${name}`);
   return importFn().catch((error: unknown) => {
     console.error(`Error loading ${name}:`, error);

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import type { RegistrationData } from '@/contexts/auth/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -24,7 +25,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ planId, onPaymentComplete }) 
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [registrationData, setRegistrationData] = useState<any>(null);
+  const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null);
 
   useEffect(() => {
     const storedData = sessionStorage.getItem('registration_data');
@@ -71,9 +72,13 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ planId, onPaymentComplete }) 
       sessionStorage.removeItem('registration_data');
       
       onPaymentComplete();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Payment/registration error:', error);
-      toast.error(error.message || 'אירעה שגיאה בתהליך ההרשמה. נסה שנית מאוחר יותר.');
+      if (error instanceof Error) {
+        toast.error(error.message || 'אירעה שגיאה בתהליך ההרשמה. נסה שנית מאוחר יותר.');
+      } else {
+        toast.error('אירעה שגיאה בתהליך ההרשמה. נסה שנית מאוחר יותר.');
+      }
     } finally {
       setIsProcessing(false);
     }

@@ -17,7 +17,7 @@ const TradeDataTable = ({ trades }: TradeDataTableProps) => {
     try {
       const date = new Date(dateTimeStr);
       return format(date, 'HH:mm');
-    } catch (e) {
+    } catch {
       return dateTimeStr;
     }
   };
