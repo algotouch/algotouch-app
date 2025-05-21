@@ -15,8 +15,8 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 async function run() {
   const { data: webhooks, error } = await supabase
     .from("payment_webhooks")
-    .select("id, payload")
-    .eq("processed", true);
+    .select("id, payload, processed")
+    .order("created_at", { ascending: false });
 
   if (error) {
     console.error("Error fetching webhooks", error);
@@ -42,7 +42,7 @@ async function run() {
       continue;
     }
 
-    if (!existingToken) {
+    if (!existingToken || webhook.processed === false) {
       console.log(`Reprocessing webhook ${webhook.id} for token ${token}`);
       await supabase.functions.invoke("process-webhook", {
         body: { webhookId: webhook.id },

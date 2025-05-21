@@ -73,3 +73,16 @@ We don't support custom domains (yet). If you want to deploy your project under 
 Recent database migrations can be found in `supabase/migrations`.
 
 - `20250410120000_add_unique_constraint_profiles_phone.sql` adds a unique constraint to the `profiles.phone` column.
+
+## Recovering Missing Payment Tokens
+
+Occasionally a Cardcom webhook may be logged without storing the payment token in
+`recurring_payments`. Run the script below to reprocess any webhook entries that
+did not create a token or remain unprocessed:
+
+```sh
+npm run ts-node scripts/reprocess-missing-tokens.ts
+```
+
+The script scans `payment_webhooks` for token information and invokes the
+`process-webhook` function for any records lacking a corresponding token entry.

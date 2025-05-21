@@ -100,7 +100,9 @@ serve(async (req) => {
             user_id: userId,
             token: tokenInfo.Token,
             token_expiry: tokenExpiry,
-            token_approval_number: tokenInfo.TokenApprovalNumber,
+            // Some Cardcom responses may omit TokenApprovalNumber even on success.
+            // Default to empty string to satisfy NOT NULL constraints.
+            token_approval_number: tokenInfo.TokenApprovalNumber || "",
             last_4_digits: transactionInfo?.Last4CardDigits || null,
             card_type: transactionInfo?.CardInfo || null,
             status: "active",
