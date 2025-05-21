@@ -96,7 +96,7 @@ serve(async (req) => {
         // Save the token to recurring_payments
         const { error: tokenError } = await supabaseClient
           .from("recurring_payments")
-          .insert({
+          .upsert({
             user_id: userId,
             token: tokenInfo.Token,
             token_expiry: tokenExpiry,
@@ -107,7 +107,7 @@ serve(async (req) => {
             card_type: transactionInfo?.CardInfo || null,
             status: "active",
             is_valid: true,
-          });
+          }, { onConflict: "token" });
 
         if (tokenError) {
           console.error("Error storing token:", tokenError);
