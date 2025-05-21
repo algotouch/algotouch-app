@@ -16,7 +16,7 @@ interface UsePaymentVerificationProps {
 interface PaymentVerificationResult {
   isLoading: boolean;
   error: string | null;
-  paymentDetails: any;
+  paymentDetails: CardcomVerifyResponse | CardcomPayload | CardcomWebhookPayload | null;
 }
 
 export function usePaymentVerification({ 
@@ -26,7 +26,7 @@ export function usePaymentVerification({
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(!skipVerification);
   const [error, setError] = useState<string | null>(null);
-  const [paymentDetails, setPaymentDetails] = useState<any>(null);
+  const [paymentDetails, setPaymentDetails] = useState<CardcomVerifyResponse | CardcomPayload | CardcomWebhookPayload | null>(null);
 
   useEffect(() => {
     // Skip verification if requested or if no ID is provided
@@ -55,19 +55,14 @@ export function usePaymentVerification({
 
         if (!webhookError && webhookData && webhookData.processed) {
           // Payment was already processed by webhook
-          // We need to safely cast the payload to our expected type
-          const payload = webhookData.payload as any;
+          const payload = webhookData.payload as CardcomWebhookPayload;
           
           PaymentLogger.info('Payment already processed by webhook', 'payment-verification', { 
             lowProfileId, 
             responseCode: payload.ResponseCode
           }, payload.ReturnValue);
           
-          setPaymentDetails({
-            source: 'webhook',
-            details: payload,
-            success: payload.ResponseCode === 0
-          });
+          setPaymentDetails(payload);
           
           if (payload.ResponseCode === 0) {
             PaymentMonitor.logVerificationSuccess(lowProfileId, 'webhook-record', payload, payload.ReturnValue);
@@ -105,11 +100,7 @@ export function usePaymentVerification({
 
         if (data?.success) {
           PaymentMonitor.logVerificationSuccess(lowProfileId, 'edge-function', data, data.registrationId);
-          setPaymentDetails({
-            source: 'edge-function',
-            details: data,
-            success: true
-          });
+          setPaymentDetails(data);
           toast.success('התשלום התקבל בהצלחה!');
           // Navigate to success page or dashboard
           navigate('/dashboard');
@@ -187,11 +178,7 @@ export function usePaymentVerification({
         await saveCardcomPaymentData(lpResult);
         PaymentMonitor.logVerificationSuccess(lowProfileId, 'direct-api', lpResult, lpResult.ReturnValue);
         
-        setPaymentDetails({
-          source: 'direct-api',
-          details: lpResult,
-          success: true
-        });
+        setPaymentDetails(lpResult);
         
         toast.success('התשלום התקבל בהצלחה!');
         navigate('/dashboard');
