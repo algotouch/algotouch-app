@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { TokenData } from '@/types/payment';
 import { RegistrationResult } from '../hooks/types';
 import { toast } from 'sonner'; 

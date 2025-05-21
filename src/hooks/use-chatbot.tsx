@@ -1,6 +1,6 @@
 
 import { useState, useCallback, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 
 type Message = {
   role: 'user' | 'assistant' | 'system';
@@ -20,6 +20,22 @@ type TTSConfig = {
   speakingRate?: number;
   pitch?: number;
 };
+
+interface PositionSizeArgs {
+  account_size: number;
+  risk_percentage: number;
+  entry_price: number;
+  stop_loss_price: number;
+}
+
+interface ProfitTargetsArgs {
+  entry_price: number;
+  stop_loss_price: number;
+  risk_reward_ratio_1?: number;
+  risk_reward_ratio_2?: number;
+  risk_reward_ratio_3?: number;
+  is_long?: boolean;
+}
 
 export function useChatbot() {
   const [messages, setMessages] = useState<Message[]>([
@@ -63,10 +79,10 @@ export function useChatbot() {
     
     switch (name) {
       case 'get_position_sizing':
-        result = calculatePositionSize(args);
+        result = calculatePositionSize(args as PositionSizeArgs);
         break;
       case 'calculate_profit_targets':
-        result = calculateProfitTargets(args);
+        result = calculateProfitTargets(args as ProfitTargetsArgs);
         break;
       default:
         result = JSON.stringify({ error: `Function ${name} not implemented` });
@@ -76,7 +92,7 @@ export function useChatbot() {
   };
   
   // Implement the functions the assistant might call
-  const calculatePositionSize = (args: any): string => {
+  const calculatePositionSize = (args: PositionSizeArgs): string => {
     const { account_size, risk_percentage, entry_price, stop_loss_price } = args;
     const riskAmount = account_size * (risk_percentage / 100);
     const priceDifference = Math.abs(entry_price - stop_loss_price);
@@ -90,7 +106,7 @@ export function useChatbot() {
     });
   };
   
-  const calculateProfitTargets = (args: any): string => {
+  const calculateProfitTargets = (args: ProfitTargetsArgs): string => {
     const { entry_price, stop_loss_price, risk_reward_ratio_1 = 1.5, risk_reward_ratio_2 = 2.5, risk_reward_ratio_3 = 4, is_long = true } = args;
     
     const risk = Math.abs(entry_price - stop_loss_price);

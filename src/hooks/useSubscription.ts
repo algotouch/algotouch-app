@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { useSubscriptionActions } from '@/services/subscription/hooks/useSubscriptionActions';
+
 import { Subscription, SubscriptionDetails } from '@/services/subscription/types';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
+
 import { useSubscriptionContext } from '@/contexts/subscription/SubscriptionContext';
 
 export interface UseSubscriptionReturn {

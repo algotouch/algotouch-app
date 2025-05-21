@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { CancellationData, ActionResult } from '../types';
 import { logError } from '@/services/errors/utils/errorTracking';
 

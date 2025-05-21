@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { UserStreak } from '@/lib/community';
 import { toast } from 'sonner';
 import { addDays, isSameDay, isAfter, differenceInDays } from 'date-fns';

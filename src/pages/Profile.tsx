@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { UserCircle, Lock, MapPin, Wrench } from 'lucide-react';
 import UserSubscription from '@/components/UserSubscription';
 import RecoveryTool from '@/components/payment/RecoveryTool';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { SubscriptionProvider } from '@/contexts/subscription/SubscriptionContext';
 
 interface ProfileData {

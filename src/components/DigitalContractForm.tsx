@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Check, FileText, Download, ArrowDown } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import SignaturePad from './signature/SignaturePad';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/auth';

@@ -1,5 +1,6 @@
 
 import { Session, User } from "@supabase/supabase-js";
+import { UserProfileData } from "@/types/user";
 
 export interface AuthContextType {
   user: User | null;
@@ -12,9 +13,15 @@ export interface AuthContextType {
   isRegistering: boolean;
   pendingSubscription: boolean;
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: any }>;
-  signUp: (email: string, password: string, userData?: any) => Promise<{ success: boolean; error?: any }>;
+  signUp: (
+    email: string,
+    password: string,
+    userData?: UserProfileData | Record<string, unknown>
+  ) => Promise<{ success: boolean; error?: any }>;
   signOut: () => Promise<void>;
-  updateProfile: (data: any) => Promise<any>;
+  updateProfile: (
+    data: UserProfileData | Record<string, unknown>
+  ) => Promise<any>;
   resetPassword: (email: string) => Promise<{ success: boolean; error?: any }>;
   setRegistrationData: (data: Partial<RegistrationData>) => void;
   clearRegistrationData: () => void;
