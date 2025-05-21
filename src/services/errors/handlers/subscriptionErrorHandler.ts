@@ -2,27 +2,36 @@
 import { toast } from 'sonner';
 import { logError } from '../utils/errorTracking';
 
+interface SubscriptionErrorOptions {
+  showToast?: boolean;
+  redirectTo?: string;
+  onError?: (error: unknown) => void;
+}
+
+export interface SubscriptionErrorResult {
+  success: false;
+  error: unknown;
+  message: string;
+}
+
 /**
  * Handles subscription errors
  */
 export const handleSubscriptionError = async (
-  error: any, 
+  error: unknown,
   userId?: string,
   context: string = 'subscription',
-  options?: {
-    showToast?: boolean;
-    redirectTo?: string;
-    onError?: (error: any) => void;
-  }
-): Promise<any> => {
+  options?: SubscriptionErrorOptions
+): Promise<SubscriptionErrorResult> => {
   const showToast = options?.showToast ?? true;
-  const errorMessage = error.message || 'שגיאה בטיפול במנוי';
+  const errorMessage =
+    error instanceof Error ? error.message : 'שגיאה בטיפול במנוי';
   
   // Log the error
   await logError({
     category: 'subscription',
     action: context,
-    error,
+    error: error instanceof Error ? error : new Error(String(error)),
     userId
   });
   
