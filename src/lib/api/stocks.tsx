@@ -80,7 +80,7 @@ export function useStockDataWithRefresh(refreshInterval = 15000) {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const toast = useToast();
+  const { toast } = useToast();
 
   useEffect(() => {
     let isMounted = true;
@@ -101,7 +101,7 @@ export function useStockDataWithRefresh(refreshInterval = 15000) {
         if (isMounted) {
           setError('Failed to fetch stock data');
           console.error(err);
-          toast?.toast({
+          toast({
             title: "שגיאה בטעינת נתונים",
             description: "לא ניתן להטעין את נתוני המדדים. נסה לרענן את הדף.",
             variant: "destructive",
@@ -125,7 +125,7 @@ export function useStockDataWithRefresh(refreshInterval = 15000) {
       isMounted = false;
       clearInterval(intervalId);
     };
-  }, [refreshInterval, toast]);
+  }, [refreshInterval]);
 
   return { stockData, loading, error, lastUpdated };
 }
