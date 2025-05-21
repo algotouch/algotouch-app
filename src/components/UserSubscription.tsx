@@ -30,7 +30,7 @@ interface WebhookCheckResult {
 const UserSubscription = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { hasActiveSubscription } = useSubscriptionContext(); // Use the computed property
+  const { hasActiveSubscription, hasFailedPayment } = useSubscriptionContext();
   const { 
     subscription, 
     loading, 
@@ -257,22 +257,24 @@ const UserSubscription = () => {
   }
 
   // Render subscription details
-  return <SubscriptionDetails 
+  return <SubscriptionDetails
     subscription={subscription}
     details={details}
     activeTab={activeTab}
     setActiveTab={setActiveTab}
     onRefresh={handleManualRefresh}
+    hasFailedPayment={hasFailedPayment}
   />;
 };
 
 // Extract subscription details view to a separate component
-const SubscriptionDetails = ({ 
-  subscription, 
-  details, 
-  activeTab, 
+const SubscriptionDetails = ({
+  subscription,
+  details,
+  activeTab,
   setActiveTab,
-  onRefresh 
+  onRefresh,
+  hasFailedPayment
 }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const hasTrial = subscription.status === 'trial' || subscription.plan_type === 'monthly';
@@ -298,10 +300,10 @@ const SubscriptionDetails = ({
     >
       <>
         <div className="flex justify-end mb-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleRefresh} 
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
             disabled={isRefreshing}
             className="text-xs flex items-center gap-1"
           >
@@ -309,6 +311,14 @@ const SubscriptionDetails = ({
             <span>רענן נתונים</span>
           </Button>
         </div>
+
+        {hasFailedPayment && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>
+              אירעה בעיה בחיוב האחרון. הגישה לחשבון מוגבלת עד לסילוק החוב.
+            </AlertDescription>
+          </Alert>
+        )}
       
         <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="my-2 w-full">
           <TabsList className="grid grid-cols-3 w-full">
