@@ -13,6 +13,10 @@ export interface ContractSignatureData {
   signature?: string;
   agreedToTerms: boolean;
   agreedToPrivacy: boolean;
+  address?: string;
+  idNumber?: string;
+  phone?: string;
+  email?: string;
   contractVersion?: string;
   browserInfo?: {
     userAgent: string;
