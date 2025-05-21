@@ -48,6 +48,20 @@ serve(async (req) => {
       throw new Error('חסרים פרטי משתמש');
     }
 
+    // Prevent duplicate registrations by email or phone
+    const { data: existing } = await supabaseClient
+      .from('profiles')
+      .select('id')
+      .or(`email.eq.${registrationData.email},phone.eq.${registrationData.userData?.phone}`)
+      .maybeSingle();
+
+    if (existing) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'כתובת מייל או טלפון כבר רשומים במערכת' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
     console.log('Starting user registration:', {
       email: registrationData.email,
       firstName: registrationData.userData.firstName,
