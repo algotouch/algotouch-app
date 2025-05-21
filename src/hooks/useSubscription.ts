@@ -2,12 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { useSubscriptionActions } from '@/services/subscription/hooks/useSubscriptionActions';
-import { SubscriptionDetails } from '@/services/subscription/types';
+import { Subscription, SubscriptionDetails } from '@/services/subscription/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useSubscriptionContext } from '@/contexts/subscription/SubscriptionContext';
 
 export interface UseSubscriptionReturn {
-  subscription: any;
+  subscription: Subscription | null;
   loading: boolean;
   details: SubscriptionDetails | null;
   error: string | null;
@@ -19,7 +19,10 @@ export interface UseSubscriptionReturn {
 
 export const useSubscription = (): UseSubscriptionReturn => {
   const { user } = useAuth();
-  const { subscription: contextSubscription, refreshSubscription: contextRefresh } = useSubscriptionContext();
+  const {
+    subscription: contextSubscription,
+    refreshSubscription: contextRefresh
+  } = useSubscriptionContext();
   const [error, setError] = useState<string | null>(null);
   const [isCheckingPayments, setIsCheckingPayments] = useState<boolean>(false);
   
@@ -204,9 +207,9 @@ export const useSubscription = (): UseSubscriptionReturn => {
     }
   }, [user, subscription, checkForUnprocessedPayments]);
 
-  return { 
-    subscription: subscription || contextSubscription, // Prioritize subscription from actions, fallback to context
-    loading: loading || isCheckingPayments, 
+  return {
+    subscription: (subscription || contextSubscription) as Subscription | null, // Prioritize subscription from actions, fallback to context
+    loading: loading || isCheckingPayments,
     details, 
     error,
     cancelSubscription,
