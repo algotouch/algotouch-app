@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,11 +57,30 @@ function validateRequest(request: SigningRequest) {
   console.log("Request validation successful");
 }
 
+async function htmlToPdf(html: string): Promise<Uint8Array> {
+  const browser = await puppeteer.launch({ args: ["--no-sandbox", "--disable-setuid-sandbox"] });
+  const page = await browser.newPage();
+  await page.setContent(html, { waitUntil: "networkidle0" });
+  const pdf = await page.pdf({ format: "A4" });
+  await browser.close();
+  return pdf;
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (const b of bytes) {
+    binary += String.fromCharCode(b);
+  }
+  return btoa(binary);
+}
+
 async function storeSignature(supabase: any, request: SigningRequest, ipAddress: string) {
   console.log(`Storing signature for user: ${request.userId}, plan: ${request.planId}`);
   try {
     // Store the contract HTML in storage first
-    const contractFileName = `${request.userId}/contract_${new Date().toISOString().replace(/[:.]/g, '-')}.html`;
+    const baseName = `contract_${new Date().toISOString().replace(/[:.]/g, '-')}`;
+    const contractFileName = `${request.userId}/${baseName}.html`;
+    const pdfFileName = `${request.userId}/${baseName}.pdf`;
     const contractData = request.contractHtml;
     
     // Create contracts bucket if it doesn't exist
@@ -141,9 +161,35 @@ async function storeSignature(supabase: any, request: SigningRequest, ipAddress:
       .storage
       .from('contracts')
       .createSignedUrl(contractFileName, 60 * 60 * 24 * 7); // 7 days expiry
-    
+
     const contractUrl = urlError ? null : urlData?.signedUrl;
     console.log("Contract signed URL created:", contractUrl ? "success" : "failed");
+
+    // Generate PDF from the HTML and upload it
+    let pdfBytes: Uint8Array | null = null;
+    let pdfUrl: string | null = null;
+    try {
+      pdfBytes = await htmlToPdf(contractData);
+      const { error: pdfUploadError } = await supabase.storage
+        .from('contracts')
+        .upload(
+          pdfFileName,
+          pdfBytes,
+          { contentType: 'application/pdf', upsert: true }
+        );
+
+      if (pdfUploadError) {
+        console.error('Error storing PDF in storage:', pdfUploadError);
+      } else {
+        console.log('PDF stored in storage successfully:', pdfFileName);
+        const { data: pdfUrlData, error: pdfUrlError } = await supabase.storage
+          .from('contracts')
+          .createSignedUrl(pdfFileName, 60 * 60 * 24 * 7);
+        pdfUrl = pdfUrlError ? null : pdfUrlData?.signedUrl;
+      }
+    } catch (pdfError) {
+      console.error('Failed generating or uploading PDF:', pdfError);
+    }
     
     // Now store the signature info in the database
     console.log("Inserting contract signature into database");
@@ -165,7 +211,7 @@ async function storeSignature(supabase: any, request: SigningRequest, ipAddress:
         contract_html: request.contractHtml,
         agreed_to_terms: request.agreedToTerms,
         agreed_to_privacy: request.agreedToPrivacy,
-        pdf_url: contractUrl
+        pdf_url: pdfUrl
       })
       .select("id")
       .single();
@@ -176,7 +222,7 @@ async function storeSignature(supabase: any, request: SigningRequest, ipAddress:
     }
     
     console.log("Signature stored successfully with ID:", signatureData.id);
-    return signatureData;
+    return { id: signatureData.id, pdfUrl, pdfBytes };
   } catch (error) {
     console.error("Exception storing signature:", error);
     throw new Error(`Failed to store signature: ${error.message}`);
@@ -307,11 +353,12 @@ serve(async (req) => {
     
     console.log("Processing digital signature for user:", request.userId);
     
-    let documentId, signatureId, signatureTimestamp;
+    let documentId, signatureId, signatureTimestamp, pdfBytes;
     try {
       const signatureData = await storeSignature(supabase, request, ipAddress);
-      
+
       documentId = signatureData.id;
+      pdfBytes = signatureData.pdfBytes;
       signatureId = crypto.randomUUID();
       signatureTimestamp = new Date().toISOString();
       
@@ -334,9 +381,19 @@ serve(async (req) => {
       console.error("Error updating subscription (continuing anyway):", subscriptionError);
     }
     
-    const encoder = new TextEncoder();
-    const contractBytes = encoder.encode(request.contractHtml);
-    const contractBase64 = btoa(String.fromCharCode(...new Uint8Array(contractBytes)));
+    let attachmentFilename = `contract-algotouch-${new Date().toISOString().slice(0,10)}.pdf`;
+    let attachmentMimeType = 'application/pdf';
+    let attachmentBase64: string;
+
+    if (pdfBytes) {
+      attachmentBase64 = bytesToBase64(pdfBytes);
+    } else {
+      const encoder = new TextEncoder();
+      const fallbackBytes = encoder.encode(request.contractHtml);
+      attachmentBase64 = btoa(String.fromCharCode(...new Uint8Array(fallbackBytes)));
+      attachmentFilename = attachmentFilename.replace('.pdf', '.html');
+      attachmentMimeType = 'text/html';
+    }
     
     const dateObj = new Date(signatureTimestamp);
     const options = { 
@@ -364,29 +421,18 @@ serve(async (req) => {
       </div>
     `;
     
-    const customerEmailData = {
-      to: request.email,
-      subject: `אישור חתימה על הסכם - AlgoTouch`,
-      html: customerEmailBody,
-      attachmentData: [{
-        filename: `contract-algotouch-${new Date().toISOString().slice(0,10)}.html`,
-        content: contractBase64,
-        mimeType: "text/html"
-      }]
-    };
-    
     let customerEmailResult;
     try {
       console.log("Sending email to customer via direct email function");
       customerEmailResult = await sendEmailDirectly(
-        supabase, 
+        supabase,
         request.email,
         `אישור חתימה על הסכם - AlgoTouch`,
         customerEmailBody,
         [{
-          filename: `contract-algotouch-${new Date().toISOString().slice(0,10)}.html`,
-          content: contractBase64,
-          mimeType: "text/html"
+          filename: attachmentFilename,
+          content: attachmentBase64,
+          mimeType: attachmentMimeType
         }]
       );
       
@@ -408,7 +454,7 @@ serve(async (req) => {
           <li>כתובת IP: ${ipAddress || "לא זוהה"}</li>
           <li>דפדפן: ${request.browserInfo.userAgent || "לא זוהה"}</li>
         </ul>
-        <p>מצורף חוזה חתום כקובץ HTML. אנא פתח את הקובץ בדפדפן לצפייה.</p>
+        <p>מצורף חוזה חתום כקובץ PDF.</p>
         <p>זהו מייל אוטומטי, אין צורך להשיב עליו.</p>
       </div>
     `;
@@ -423,9 +469,9 @@ serve(async (req) => {
         `הסכם חדש נחתם - ${request.fullName}`,
         adminEmailBody,
         [{
-          filename: `contract-${request.fullName.replace(/\s+/g, '-')}-${new Date().toISOString().slice(0,10)}.html`,
-          content: contractBase64,
-          mimeType: "text/html"
+          filename: attachmentFilename.replace('algotouch', request.fullName.replace(/\s+/g, '-')),
+          content: attachmentBase64,
+          mimeType: attachmentMimeType
         }]
       );
       
