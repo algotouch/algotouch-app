@@ -1,6 +1,13 @@
 
 import { TradeRecord } from '@/lib/trade-analysis';
 
+export interface CalendarDay {
+  day: number;
+  month: 'current' | 'prev' | 'next';
+  isToday?: boolean;
+  status?: 'positive' | 'negative' | 'neutral';
+}
+
 /**
  * Generates calendar days for a specific month
  */
@@ -8,7 +15,7 @@ export function generateCalendarDays(
   month: string,
   year: number,
   tradesData: Record<string, TradeRecord[]>
-) {
+): CalendarDay[] {
   // Hebrew month names
   const hebrewMonths = [
     'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
@@ -40,13 +47,13 @@ export function generateCalendarDays(
   const daysInPrevMonth = prevMonth.getDate();
   
   // Calendar Array (6 weeks x 7 days)
-  const calendar = [];
+  const calendar: CalendarDay[] = [];
   
   // Add previous month days
   for (let i = 0; i < firstDayOfWeek; i++) {
     calendar.push({
       day: daysInPrevMonth - firstDayOfWeek + i + 1,
-      month: 'prev',
+      month: 'prev' as const,
     });
   }
   
@@ -64,7 +71,7 @@ export function generateCalendarDays(
       
     calendar.push({
       day: i,
-      month: 'current',
+      month: 'current' as const,
       isToday,
       status: hasTrades ? (dailyProfit > 0 ? 'positive' : 'negative') : 'neutral'
     });
@@ -75,7 +82,7 @@ export function generateCalendarDays(
   for (let i = 1; i <= remainingDays; i++) {
     calendar.push({
       day: i,
-      month: 'next',
+      month: 'next' as const,
     });
   }
   

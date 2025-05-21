@@ -16,9 +16,6 @@ export interface ContractSignatureData {
   signature?: string;
   agreedToTerms: boolean;
   agreedToPrivacy: boolean;
-  address?: string;
-  idNumber?: string;
-  phone?: string;
   email?: string;
   contractVersion?: string;
   browserInfo?: {
@@ -59,6 +56,7 @@ export interface RegistrationData {
   planId: string;
   contractSigned?: boolean;
   contractSignedAt?: string;
+  ipAddress?: string;
   contractDetails?: ContractSignatureData;
   userData: {
     firstName: string;

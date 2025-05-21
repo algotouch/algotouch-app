@@ -15,7 +15,7 @@ export function useUniqueUserValidation(email: string, phone: string) {
         .from('profiles')
         .select('id')
         .eq('email', email)
-        .maybeSingle();
+        .maybeSingle<{ id: string }>();
       setEmailError(data ? 'כתובת מייל כבר רשומה במערכת' : null);
     }, 500);
     return () => clearTimeout(timer);
@@ -28,7 +28,7 @@ export function useUniqueUserValidation(email: string, phone: string) {
         .from('profiles')
         .select('id')
         .eq('phone', phone)
-        .maybeSingle();
+        .maybeSingle<{ id: string }>();
       setPhoneError(data ? 'מספר טלפון כבר רשום במערכת' : null);
     }, 500);
     return () => clearTimeout(timer);
