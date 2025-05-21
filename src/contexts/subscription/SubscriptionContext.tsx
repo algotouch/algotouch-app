@@ -38,9 +38,10 @@ interface SubscriptionContextType {
   
   // Instead of separate subscription state variables
   subscription: SubscriptionRecord | null;
-  
+
   // Computed properties
   hasActiveSubscription: boolean;
+  hasFailedPayment: boolean;
   planType: string | null;
 }
 
@@ -68,10 +69,11 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState<number>(0);
+  const [hasFailedPayment, setHasFailedPayment] = useState<boolean>(false);
 
   // Computed property: hasActiveSubscription
   const hasActiveSubscription = React.useMemo(() => {
-    if (!subscription) return false;
+    if (!subscription || hasFailedPayment) return false;
     
     const now = new Date();
     const trialEndsAt = subscription.trial_ends_at ? new Date(subscription.trial_ends_at) : null;
@@ -83,7 +85,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     const isCancelled = subscription.cancelled_at !== null && subscription.cancelled_at !== undefined;
     
     return (isActive || isTrial || isValidPeriod) && !isCancelled;
-  }, [subscription]);
+  }, [subscription, hasFailedPayment]);
 
   // Computed property: planType
   const planType = subscription?.plan_type || null;
@@ -264,6 +266,25 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
           console.error('Error handling recurring payments check:', err);
         }
       }
+
+      // Check for failed payments
+      try {
+        const { data: paymentLog, error: paymentError } = await supabase
+          .from('user_payment_logs')
+          .select('status')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (paymentError) {
+          console.error('Error checking last payment log:', paymentError);
+        } else {
+          setHasFailedPayment(paymentLog?.status === 'payment_failed');
+        }
+      } catch (err) {
+        console.error('Failed to check payment logs:', err);
+      }
       
     } catch (error: any) {
       console.error('Error checking subscription:', error);
@@ -289,9 +310,10 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     
     // Single source of truth for subscription
     subscription,
-    
+
     // Computed properties
     hasActiveSubscription,
+    hasFailedPayment,
     planType
   };
 
