@@ -133,11 +133,11 @@ serve(async (req) => {
     if (!webhookError && existingWebhook?.processed && existingWebhook?.payload) {
       // We already processed this payment via webhook
       const webhookData = existingWebhook.payload as unknown as CardcomResponse;
-      
+
       if (webhookData.ResponseCode === 0) {
         await logPaymentEvent(
-          supabaseClient, 
-          'info', 
+          supabaseClient,
+          'info',
           `Payment already verified via webhook: ${existingWebhook.id}`,
           'verify-cardcom-payment',
           { 
@@ -149,6 +149,15 @@ serve(async (req) => {
           webhookData.TranzactionId?.toString()
         );
         
+        // Validate token presence when required
+        if (
+          (webhookData.Operation === 'ChargeAndCreateToken' ||
+            webhookData.Operation === 'CreateTokenOnly') &&
+          !webhookData.TokenInfo?.Token
+        ) {
+          throw new Error('Token information missing in webhook data');
+        }
+
         // Extract payment details
         const paymentDetails = webhookData.TranzactionInfo ? {
           transactionId: webhookData.TranzactionInfo.TranzactionId,
@@ -230,6 +239,13 @@ serve(async (req) => {
     
     if (cardcomData.ResponseCode !== 0) {
       throw new Error(`Payment verification failed: ${cardcomData.Description || 'Unknown error'}`);
+    }
+
+    if (
+      (cardcomData.Operation === 'ChargeAndCreateToken' || cardcomData.Operation === 'CreateTokenOnly') &&
+      !cardcomData.TokenInfo?.Token
+    ) {
+      throw new Error('Token not generated');
     }
 
     // Save the response to payment_webhooks table for future reference
