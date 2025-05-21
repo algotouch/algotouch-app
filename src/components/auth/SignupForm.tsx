@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
+import { supabase } from '@/lib/supabase-client';
 
 interface SignupFormProps {
   onSignupSuccess?: () => void;
@@ -73,7 +74,19 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSignupSuccess }) => {
     try {
       setSigningUp(true);
       console.log('Starting registration process for:', email);
-      
+
+      // Check for existing profile with same email or phone
+      const { data: existing } = await supabase
+        .from('profiles')
+        .select('id')
+        .or(`email.eq.${email},phone.eq.${phone}`)
+        .maybeSingle();
+
+      if (existing) {
+        toast.error('כתובת מייל או טלפון כבר רשומים במערכת');
+        return;
+      }
+
       // Use auth context to sign up - Fix by providing email and password as string arguments
       const { success, error } = await signUp(email, password, {
         firstName,
