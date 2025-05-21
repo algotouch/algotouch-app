@@ -40,7 +40,7 @@ const RoutePrefetcher: React.FC = () => {
           // Ignore errors - this is just prefetching
           console.debug(`Failed to prefetch ${moduleName}`);
         });
-      } catch (e) {
+      } catch {
         // Ignore errors in prefetch
       }
     });

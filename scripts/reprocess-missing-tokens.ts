@@ -12,9 +12,19 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: { persistSession: false },
 });
 
+interface PaymentWebhook {
+  id: string;
+  payload: {
+    TokenInfo?: {
+      Token?: string;
+    };
+  } | null;
+  processed: boolean | null;
+}
+
 async function run() {
   const { data: webhooks, error } = await supabase
-    .from("payment_webhooks")
+    .from<PaymentWebhook>("payment_webhooks")
     .select("id, payload, processed")
     .order("created_at", { ascending: false });
 
@@ -26,9 +36,7 @@ async function run() {
   if (!webhooks) return;
 
   for (const webhook of webhooks) {
-    const token = (webhook as any).payload?.TokenInfo?.Token as
-      | string
-      | undefined;
+    const token = webhook.payload?.TokenInfo?.Token;
     if (!token) continue;
 
     const { data: existingToken, error: tokenErr } = await supabase
