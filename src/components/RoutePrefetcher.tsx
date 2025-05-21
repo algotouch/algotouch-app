@@ -25,7 +25,15 @@ const RoutePrefetcher: React.FC = () => {
     routesToPrefetch.forEach(route => {
       try {
         const routeWithoutSlash = route.substring(1);
-        const moduleName = routeWithoutSlash.charAt(0).toUpperCase() + routeWithoutSlash.substring(1);
+        const toPascalCase = (str: string) =>
+          str
+            .split('-')
+            .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+            .join('');
+        const manualMap: Record<string, string> = {
+          '/my-subscription': 'MySubscriptionPage'
+        };
+        const moduleName = manualMap[route] ?? toPascalCase(routeWithoutSlash);
         
         // Dynamic import to trigger preload
         import(`../pages/${moduleName}.tsx`).catch(() => {
