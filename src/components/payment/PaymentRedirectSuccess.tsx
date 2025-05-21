@@ -4,12 +4,25 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
+import { CardcomPayload, CardcomVerifyResponse, CardcomWebhookPayload } from '@/types/payment';
+
 interface PaymentRedirectSuccessProps {
-  paymentDetails: any;
+  paymentDetails: CardcomVerifyResponse | CardcomPayload | CardcomWebhookPayload | null;
 }
 
 export const PaymentRedirectSuccess: React.FC<PaymentRedirectSuccessProps> = ({ paymentDetails }) => {
   const navigate = useNavigate();
+
+  const transactionId = React.useMemo(() => {
+    if (!paymentDetails) return null;
+    if ('TranzactionId' in paymentDetails && paymentDetails.TranzactionId) {
+      return paymentDetails.TranzactionId;
+    }
+    if ('paymentDetails' in paymentDetails && paymentDetails.paymentDetails?.transactionId) {
+      return paymentDetails.paymentDetails.transactionId;
+    }
+    return null;
+  }, [paymentDetails]);
 
   return (
     <div className="flex justify-center items-center min-h-screen p-4">
@@ -20,12 +33,9 @@ export const PaymentRedirectSuccess: React.FC<PaymentRedirectSuccessProps> = ({ 
         </CardHeader>
         <CardContent>
           <p>פרטי העסקה נשמרו במערכת.</p>
-          {paymentDetails && (
+          {transactionId && (
             <div className="mt-2 text-sm text-muted-foreground">
-              <p>מקור האימות: {paymentDetails.source}</p>
-              {paymentDetails.details?.TranzactionId && (
-                <p>מזהה עסקה: {paymentDetails.details.TranzactionId}</p>
-              )}
+              <p>מזהה עסקה: {transactionId}</p>
             </div>
           )}
         </CardContent>
