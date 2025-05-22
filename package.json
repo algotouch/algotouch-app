@@ -48,7 +48,7 @@
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.3.0",
     "framer-motion": "^12.10.1",
-    "imask": "^6.6.1",
+    "imask": "^6.6.3",
     "input-otp": "^1.4.2",
     "lighthouse-ci": "^1.13.1",
     "lucide-react": "^0.462.0",
